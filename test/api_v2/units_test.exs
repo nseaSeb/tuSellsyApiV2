@@ -2,6 +2,8 @@
 defmodule Api.UnitsTest do
   use ExUnit.Case
 
+  #todo add post and delete unit mais pas encore dispo en V2
+
   setup_all do
     # UN SEUL APPEL pour tous les tests de ce module
     start_supervised!(OauthClient)
@@ -44,5 +46,6 @@ defmodule Api.UnitsTest do
       ids = Enum.map(units, & &1["id"])
       assert length(ids) == length(Enum.uniq(ids))
     end
+
   end
 end
