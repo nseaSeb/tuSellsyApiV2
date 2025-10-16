@@ -86,6 +86,7 @@ defmodule Api.TaxesTest do
       end)
     end
 
+
     ###
 #     test "creation d'une taxe avec valeurs par defaut" do
 #   body = %{rate: 10, label: "test TU minimal"}
@@ -158,4 +159,69 @@ defmodule Api.TaxesTest do
 #   on_exit(fn -> Api_V2.delete("taxes/#{tax_id}") end)
 # end
   end
+    describe "Création de taxe avec données invalides" do
+    test "échoue sans le champ rate requis" do
+      body = %{label: "Test sans rate"}  # Manque rate (requis)
+      {:ok, result} = Api_V2.post("taxes", body)
+      assert result.status in [400, 422]
+
+
+    end
+
+    test "échoue sans le champ label requis" do
+      body = %{rate: 10.0}  # Manque label (requis)
+      {:ok, result} = Api_V2.post("taxes", body)
+      assert result.status in [400, 422]
+
+    end
+
+    test "échoue avec rate négatif" do
+      body = %{rate: -5.0, label: "Test rate négatif"}
+      {:ok, result} = Api_V2.post("taxes", body)
+      assert result.status in [400, 422]
+    end
+
+    test "échoue avec rate trop élevé - KNOWN API BUG" do
+      body = %{rate: 1000.0, label: "Test rate trop élevé"}
+      {:ok, result} = Api_V2.post("taxes", body)
+      assert result.status in [400, 422]
+    end
+
+    test "échoue avec label vide - KNOWN API BUG" do
+      body = %{rate: 10.0, label: ""}
+      {:ok, result} = Api_V2.post("taxes", body)
+      assert result.status in [400, 422]
+    end
+
+    test "échoue avec label trop long" do
+      long_label = String.duplicate("a", 256)  # Supposons une limite de 255 chars
+      body = %{rate: 10.0, label: long_label}
+      {:ok, result} = Api_V2.post("taxes", body)
+      assert result.status in [400, 422]
+    end
+  end
+
+  describe "Format des réponses d'erreur" do
+  test "erreur 404 sur taxe inexistante" do
+    {:ok, result} = Api_V2.get("taxes/999999999")
+    assert result.status == 404
+  end
+
+  test "erreur 404 sur suppression taxe inexistante" do
+    {:ok, result} = Api_V2.delete("taxes/999999999")
+    assert result.status == 404
+  end
+
+  test "structure cohérente des erreurs" do
+    body = %{label: "Test sans rate"}  # Rate manquant
+    {:ok, result} = Api_V2.post("taxes", body)
+
+    {:ok, error_body} = Jason.decode(result.body)
+
+    # Vérifie que l'erreur a une structure cohérente
+    assert is_map(error_body)
+    # Soit un message, soit un code d'erreur, soit les deux
+    assert Map.has_key?(error_body, "message") || Map.has_key?(error_body, "error") || Map.has_key?(error_body, "code")
+  end
+end
 end
