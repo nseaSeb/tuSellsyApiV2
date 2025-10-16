@@ -2,7 +2,7 @@
 
 ## 📊 Testing Status
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/nseaSeb/tuSellsyApiV2/CI)
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/nseaSeb/tuSellsyApiV2/.github/workflows/ci.yml)
 ![Tests](https://img.shields.io/badge/tests-real_API_calls-blue)
 
 🧪 **No mocks, real API testing** for Sellsy API v2 using Elixir. Built to validate endpoints with actual HTTP calls and dedicated test account isolation.

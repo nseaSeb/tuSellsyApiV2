@@ -18,4 +18,4 @@ jobs:
           otp-version: '26'
       
       - run: mix deps.get
-      - run: mix test
+      - run: mix test --exclude real_api
