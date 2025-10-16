@@ -1,6 +1,7 @@
 # Tu
 
 ## Création du projet:
+Vous devez renseigner le fichier de config-sample.exs (idéalement renommer config.exs)
 
 Exemple de TU en Elixir
 
