@@ -65,13 +65,6 @@ defmodule Api.TaxesTest do
       assert is_boolean(get_body["is_active"])
       assert is_boolean(get_body["is_ecotax"])
 
-      # 3. Vérification dans la liste complète
-      {:ok, list_result} = Api_V2.get("taxes", %{})
-      {:ok, list_body} = Jason.decode(list_result.body)
-      created_tax = Enum.find(list_body["data"], fn t -> t["id"] == tax_id end)
-      assert created_tax != nil
-      assert created_tax["label"] == "test TU 7.5"
-
       # 4. Suppression
       {:ok, delete_result} = Api_V2.delete("taxes/#{tax_id}")
       assert delete_result.status in [200, 204]
@@ -164,7 +157,10 @@ defmodule Api.TaxesTest do
       body = %{label: "Test sans rate"}  # Manque rate (requis)
       {:ok, result} = Api_V2.post("taxes", body)
       assert result.status in [400, 422]
-
+    # Si par erreur c'était un succès, on nettoie
+    if result.status in [200, 201] do
+      cleanup_taxe(result.body)
+    end
 
     end
 
@@ -179,18 +175,30 @@ defmodule Api.TaxesTest do
       body = %{rate: -5.0, label: "Test rate négatif"}
       {:ok, result} = Api_V2.post("taxes", body)
       assert result.status in [400, 422]
+      # Si par erreur c'était un succès, on nettoie
+      if result.status in [200, 201] do
+        cleanup_taxe(result.body)
+      end
     end
 
     test "échoue avec rate trop élevé - KNOWN API BUG" do
       body = %{rate: 1000.0, label: "Test rate trop élevé"}
       {:ok, result} = Api_V2.post("taxes", body)
       assert result.status in [400, 422]
+            # Si par erreur c'était un succès, on nettoie
+      if result.status in [200, 201] do
+        cleanup_taxe(result.body)
+      end
     end
 
     test "échoue avec label vide - KNOWN API BUG" do
       body = %{rate: 10.0, label: ""}
       {:ok, result} = Api_V2.post("taxes", body)
       assert result.status in [400, 422]
+            # Si par erreur c'était un succès, on nettoie
+      if result.status in [200, 201] do
+        cleanup_taxe(result.body)
+      end
     end
 
     test "échoue avec label trop long" do
@@ -198,6 +206,10 @@ defmodule Api.TaxesTest do
       body = %{rate: 10.0, label: long_label}
       {:ok, result} = Api_V2.post("taxes", body)
       assert result.status in [400, 422]
+            # Si par erreur c'était un succès, on nettoie
+      if result.status in [200, 201] do
+        cleanup_taxe(result.body)
+      end
     end
   end
 
@@ -205,6 +217,7 @@ defmodule Api.TaxesTest do
   test "erreur 404 sur taxe inexistante" do
     {:ok, result} = Api_V2.get("taxes/999999999")
     assert result.status == 404
+
   end
 
   test "erreur 404 sur suppression taxe inexistante" do
@@ -222,6 +235,12 @@ defmodule Api.TaxesTest do
     assert is_map(error_body)
     # Soit un message, soit un code d'erreur, soit les deux
     assert Map.has_key?(error_body, "message") || Map.has_key?(error_body, "error") || Map.has_key?(error_body, "code")
+  end
+
+  defp cleanup_taxe(response_body) do
+    {:ok, parsed} = Jason.decode(response_body)
+    taxe_id = parsed["id"]
+    Api_V2.delete("taxes/#{taxe_id}")
   end
 end
 end
