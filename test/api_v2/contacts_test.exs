@@ -18,7 +18,7 @@ defmodule Api.ContactsTest do
       assert is_list(contacts)
       assert length(contacts) > 0
     end
-       test "chaque taxe a les champs obligatoires", %{body: body} do
+       test "chaque contact a les champs obligatoires", %{body: body} do
       %{"data" => contacts} = body
       for contact <- contacts do
         assert is_integer(contact["id"])
